@@ -105,7 +105,13 @@
         rptSiteCacheProfiles.DataSource = GetCachesByNames(GetSelectedSiteNames(),true);
         rptSiteCacheProfiles.DataBind();
     }
+    
+    protected void FetchSiteCacheProfileContent(object sender, EventArgs e) {
 
+        rptSiteCacheProfiles.DataSource = GetCachesByNames(GetSelectedSiteNames(),true,false,true);
+        rptSiteCacheProfiles.DataBind();
+    }
+    
     protected void ClearSiteCacheProfile(object sender, EventArgs e) {
 
         List<MyCache> list = GetCachesByNames(GetSelectedSiteNames(),false,true);
@@ -285,6 +291,12 @@
             return;
         rptBySite.DataSource = cacheItem.Keys;
         rptBySite.DataBind();
+        
+        Repeater rptBySite2 = (Repeater)e.Item.FindControl("rptBySite2");
+	if (rptBySite2 == null)
+	    return;
+	rptBySite2.DataSource = cacheItem.Data;
+        rptBySite2.DataBind();
     }
 
     protected List<string> GetSelectedSiteNames() {
@@ -336,7 +348,7 @@
         return returnNames;
     }
 
-    protected List<MyCache> GetCachesByNames(List<string> names, bool includeKeys, bool clear=false) {
+    protected List<MyCache> GetCachesByNames(List<string> names, bool includeKeys, bool clear=false, bool includeContent=false) {
 
         List<MyCache> returnCaches = new List<MyCache>();
         foreach (string s in names) {
@@ -567,6 +579,14 @@
                         c.MaxSize = sc.MaxSize;
                         c.Count = sc.Count;
                         if (includeKeys) c.Keys = sc.GetCacheKeys();
+                        if (includeContent) {
+                        	c.Data = new Dictionary<string, string>();
+                        	foreach(string key in c.Keys)
+			 	{
+			                c.Data.Add(key,sc.GetValue(key).ToString());
+ 		           	}
+ 		           	c.Keys =  null;
+                        }
                     }
                 } catch (Exception ex)
                 {
@@ -636,6 +656,7 @@
         public long Size { get; set; }
         public long MaxSize { get; set; }
         public string[] Keys { get; set; }
+        public Dictionary<string, string> Data { get; set; }
     }
 
     #endregion Helpers
@@ -706,6 +727,7 @@
 		            .btn a { color:#dc291e; font-size: 8pt; border:none; background:none; float:left; height:15px; text-decoration:none; }
                     .btn input:hover,
                     .btn a:hover { text-decoration:underline; }
+            .HtmlContent {border: 1px solid black;background-color: lightblue;}
 	</style>
     <script src="/sitecore/shell/client/Speak/Assets/lib/ui/2.0/deps/jquery-2.1.1.min.js"></script>
     <script type="text/javascript">
@@ -913,6 +935,9 @@
 								<div class="btn">
 									<asp:button ID="Button6" rel=".SiteRegion" CssClass="profile" runat="server" Text="Get Cache Entries" OnClick="FetchSiteCacheProfile"></asp:button>
 								</div>
+								<div class="btn">
+									<asp:button ID="Button6b" rel=".SiteRegion" CssClass="profile" runat="server" Text="Get Cache Entries and Cached Content" OnClick="FetchSiteCacheProfileContent"></asp:button>
+								</div>
 								<div class="btnSpacer">.</div>
 								<div class="btn">
 									<asp:button ID="Button8" rel=".SiteRegion" CssClass="BtnClear" runat="server" Text="Clear Cache Entries" OnClick="ClearSiteCacheProfile"></asp:button>
@@ -970,6 +995,19 @@
 														</div>
 													</ItemTemplate>
 												</asp:Repeater>
+												<asp:Repeater ID="rptBySite2" runat="server">
+													<HeaderTemplate>
+														<div class="FormRow">
+															<div class="CacheID RowTitle">Cache Data</div>
+															<div class="clear"></div>
+														</div>
+													</HeaderTemplate>
+													<ItemTemplate>
+														<div class="FormRow <%# GetClass(Container.ItemIndex) %>">
+															<div class="CacheID"><%# ((KeyValuePair<string,string>)Container.DataItem).Key %><div class="HtmlContent"<%# ((KeyValuePair<string,string>)Container.DataItem).Value %></div></div>
+														</div>
+													</ItemTemplate>
+												</asp:Repeater>
 											</div>
 										</div>
 									</ItemTemplate>
@@ -1022,7 +1060,7 @@
 								</div>
 								<div class="btnSpacer">.</div>
 								<div class="btn">
-									<asp:button ID="Button5" rel=".DatabaseRegion" class="profile" runat="server" Text="Get Cache Entries" OnClick="FetchDBCacheProfile"></asp:button>
+									<asp:button ID="Button5" rel=".DatabaseRegion" class="profile" runat="server" Text="FetchSiteCacheProfile2" OnClick="FetchDBCacheProfile"></asp:button>
 								</div>
 								<div class="btnSpacer">.</div>
 								<div class="btn">
@@ -1129,7 +1167,7 @@
 							<asp:Repeater ID="rptARCaches" runat="server">
 							<HeaderTemplate>
 								<div class="FormTitleRow">
-									<div class="Name RowTitle">Name</div>
+									<div class="Name RowTitle">Name jbl</div>
 									<div class="Count RowTitle">Cache Entries</div>
 									<div class="Size RowTitle">Size</div>
 									<div class="MaxSize RowTitle">MaxSize</div>
