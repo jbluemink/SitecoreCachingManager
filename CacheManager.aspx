@@ -108,8 +108,14 @@
     
     protected void FetchSiteCacheProfileContent(object sender, EventArgs e) {
 
-        rptSiteCacheProfiles.DataSource = GetCachesByNames(GetSelectedSiteNames(),true,false,true);
+        rptSiteCacheProfiles.DataSource = GetCachesByNames(GetSelectedSiteNames(),true,false,1);
         rptSiteCacheProfiles.DataBind();
+    }
+    
+    protected void FetchSiteCacheProfileContentEncode(object sender, EventArgs e) {
+    
+            rptSiteCacheProfiles.DataSource = GetCachesByNames(GetSelectedSiteNames(),true,false,2);
+            rptSiteCacheProfiles.DataBind();
     }
     
     protected void ClearSiteCacheProfile(object sender, EventArgs e) {
@@ -348,7 +354,7 @@
         return returnNames;
     }
 
-    protected List<MyCache> GetCachesByNames(List<string> names, bool includeKeys, bool clear=false, bool includeContent=false) {
+    protected List<MyCache> GetCachesByNames(List<string> names, bool includeKeys, bool clear=false, int includeContent=0) {
 
         List<MyCache> returnCaches = new List<MyCache>();
         foreach (string s in names) {
@@ -579,11 +585,16 @@
                         c.MaxSize = sc.MaxSize;
                         c.Count = sc.Count;
                         if (includeKeys) c.Keys = sc.GetCacheKeys();
-                        if (includeContent) {
+                        if (includeContent > 0) {
                         	c.Data = new Dictionary<string, string>();
                         	foreach(string key in c.Keys)
 			 	{
-			                c.Data.Add(key,sc.GetValue(key).ToString());
+			 		if (includeContent == 2)
+			 		{
+			                	c.Data.Add(key,HttpUtility.HtmlEncode(sc.GetValue(key).ToString()));
+			                } else {
+			                	c.Data.Add(key,sc.GetValue(key).ToString());
+			                }
  		           	}
  		           	c.Keys =  null;
                         }
@@ -936,7 +947,10 @@
 									<asp:button ID="Button6" rel=".SiteRegion" CssClass="profile" runat="server" Text="Get Cache Entries" OnClick="FetchSiteCacheProfile"></asp:button>
 								</div>
 								<div class="btn">
-									<asp:button ID="Button6b" rel=".SiteRegion" CssClass="profile" runat="server" Text="Get Cache Entries and Cached Content" OnClick="FetchSiteCacheProfileContent"></asp:button>
+									<asp:button ID="Button6b" rel=".SiteRegion" CssClass="profile" runat="server" Text="Get Cache Content" OnClick="FetchSiteCacheProfileContent"></asp:button>
+								</div>
+								<div class="btn">
+									<asp:button ID="Button6c" rel=".SiteRegion" CssClass="profile" runat="server" Text="Get Cache Content HTML Encode" OnClick="FetchSiteCacheProfileContentEncode"></asp:button>
 								</div>
 								<div class="btnSpacer">.</div>
 								<div class="btn">
@@ -1004,7 +1018,7 @@
 													</HeaderTemplate>
 													<ItemTemplate>
 														<div class="FormRow <%# GetClass(Container.ItemIndex) %>">
-															<div class="CacheID"><%# ((KeyValuePair<string,string>)Container.DataItem).Key %><div class="HtmlContent"<%# ((KeyValuePair<string,string>)Container.DataItem).Value %></div></div>
+															<div class="CacheID"><%# ((KeyValuePair<string,string>)Container.DataItem).Key %><div class="HtmlContent"><%# ((KeyValuePair<string,string>)Container.DataItem).Value %></div></div>
 														</div>
 													</ItemTemplate>
 												</asp:Repeater>
@@ -1167,7 +1181,7 @@
 							<asp:Repeater ID="rptARCaches" runat="server">
 							<HeaderTemplate>
 								<div class="FormTitleRow">
-									<div class="Name RowTitle">Name jbl</div>
+									<div class="Name RowTitle">Name</div>
 									<div class="Count RowTitle">Cache Entries</div>
 									<div class="Size RowTitle">Size</div>
 									<div class="MaxSize RowTitle">MaxSize</div>
